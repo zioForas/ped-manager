@@ -1,0 +1,52 @@
+{
+  "cliente": "Cliente Demo",
+  "sito": "https://www.esempio.it",
+  "ig": "cliente_demo",
+  "fb": "ClienteDemo",
+  "localita": "Italia",
+  "tono": "professionale ma caldo, rassicurante, accessibile",
+  "emoji": true,
+  "team": "Descrivi qui la storia e i valori del cliente: chi sono, da dove nascono, cosa li distingue. Questo testo viene usato dall'AI come contesto per generare i post.",
+  "sedi": [
+    {
+      "citta": "CITTÀ",
+      "indirizzo": "Via Esempio 1",
+      "telefono": "000 0000000"
+    }
+  ],
+  "cta": "Prenota ora.",
+  "hashtag_fissi": [
+    "#brand",
+    "#settore",
+    "#citta"
+  ],
+  "hashtag_per_argomento": {
+    "argomento_uno": [
+      "#tag1",
+      "#tag2"
+    ],
+    "argomento_due": [
+      "#tag3"
+    ]
+  },
+  "argomenti": [
+    "Argomento Uno",
+    "Argomento Due"
+  ],
+  "post_settimana": 2,
+  "stories_settimana": 4,
+  "orari_post": [
+    "09:00",
+    "18:00"
+  ],
+  "orari_stories": [
+    "10:00",
+    "19:00"
+  ],
+  "mesi": [
+    "Giugno",
+    "Luglio"
+  ],
+  "anno": 2026,
+  "email_cliente": "cliente@esempio.it"
+}

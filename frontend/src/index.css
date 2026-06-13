@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+/*
+  PED MANAGER — Design System "Glass 2026"
+  ----------------------------------------------------------------
+  Look: vetro traslucido stile Apple, modalità chiara/scura automatica,
+  dark mode in VERDE PREMIUM. White-label: per personalizzare un cliente
+  basta impostare UNA variabile --brand (vedi src/theme/clients.js):
+  tutti gli accenti, i bagliori e gli stati derivano da quella.
+*/
+
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+               "Segoe UI", system-ui, "Helvetica Neue", sans-serif;
+}
+
+:root {
+  /* ─ BRAND (verde premium di default, sovrascrivibile per cliente) ─ */
+  --brand: #0fa46a;
+  --brand-strong: color-mix(in srgb, var(--brand) 80%, #000);
+  --brand-bright: color-mix(in srgb, var(--brand) 78%, #fff);
+  --brand-soft: color-mix(in srgb, var(--brand) 14%, transparent);
+  --brand-faint: color-mix(in srgb, var(--brand) 7%, transparent);
+  --brand-border: color-mix(in srgb, var(--brand) 38%, transparent);
+
+  /* ─ LIGHT (default) ─ */
+  --bg: #eaf0ec;
+  --bg-2: #e3ebe6;
+  --glow-1: color-mix(in srgb, var(--brand) 18%, transparent);
+  --glow-2: color-mix(in srgb, var(--brand) 10%, transparent);
+  --surface: rgba(255, 255, 255, 0.62);
+  --surface-2: rgba(255, 255, 255, 0.80);
+  --surface-hover: rgba(255, 255, 255, 0.92);
+  --border: rgba(10, 35, 24, 0.10);
+  --border-strong: rgba(10, 35, 24, 0.16);
+  --text: #0b1712;
+  --text-muted: #54675d;
+  --text-faint: #859389;
+  --shadow: 0 10px 40px rgba(12, 45, 30, 0.12);
+  --shadow-lg: 0 28px 80px rgba(12, 45, 30, 0.20);
+  --ring: color-mix(in srgb, var(--brand) 35%, transparent);
+  color-scheme: light;
+}
+
+/* ─ DARK (verde scuro premium) — automatico da sistema ─ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #061009;
+    --bg-2: #04140c;
+    --glow-1: color-mix(in srgb, var(--brand) 26%, transparent);
+    --glow-2: color-mix(in srgb, var(--brand) 14%, transparent);
+    --surface: rgba(255, 255, 255, 0.045);
+    --surface-2: rgba(255, 255, 255, 0.075);
+    --surface-hover: rgba(255, 255, 255, 0.11);
+    --border: rgba(255, 255, 255, 0.09);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --text: #e9f2ec;
+    --text-muted: #93a99d;
+    --text-faint: #61756a;
+    --shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 30px 90px rgba(0, 0, 0, 0.6);
+    --ring: color-mix(in srgb, var(--brand) 45%, transparent);
+    color-scheme: dark;
+  }
+}
+/* ─ DARK forzato (toggle manuale) ─ */
+[data-theme="dark"] {
+  --bg: #061009;
+  --bg-2: #04140c;
+  --glow-1: color-mix(in srgb, var(--brand) 26%, transparent);
+  --glow-2: color-mix(in srgb, var(--brand) 14%, transparent);
+  --surface: rgba(255, 255, 255, 0.045);
+  --surface-2: rgba(255, 255, 255, 0.075);
+  --surface-hover: rgba(255, 255, 255, 0.11);
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --text: #e9f2ec;
+  --text-muted: #93a99d;
+  --text-faint: #61756a;
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 30px 90px rgba(0, 0, 0, 0.6);
+  --ring: color-mix(in srgb, var(--brand) 45%, transparent);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
+}
+
+/* sfondo a bagliori (aurora) che reagisce al brand */
+.app-bg {
+  position: fixed; inset: 0; z-index: -1; overflow: hidden;
+  background:
+    radial-gradient(900px 600px at 82% -8%, var(--glow-1), transparent 60%),
+    radial-gradient(820px 560px at -8% 14%, var(--glow-2), transparent 58%),
+    linear-gradient(180deg, var(--bg), var(--bg-2));
+}
+
+/* ───────── VETRO (glass) ───────── */
+.glass {
+  background: var(--surface);
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.glass-2 {
+  background: var(--surface-2);
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  border: 1px solid var(--border);
+}
+.glass-hover { transition: background .2s, border-color .2s, transform .15s, box-shadow .2s; }
+.glass-hover:hover { background: var(--surface-hover); border-color: var(--border-strong); }
+
+/* ───────── BOTTONI ───────── */
+.btn { font: inherit; cursor: pointer; border: none; border-radius: 14px;
+  padding: 11px 18px; font-weight: 650; font-size: 14px; transition: filter .15s, transform .12s, background .2s;
+  display: inline-flex; align-items: center; gap: 8px; letter-spacing: -0.01em; }
+.btn:active { transform: scale(.975); }
+.btn-brand { background: linear-gradient(135deg, var(--brand-bright), var(--brand));
+  color: #fff; box-shadow: 0 8px 24px var(--brand-soft); }
+.btn-brand:hover { filter: brightness(1.06); }
+.btn-ghost { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--surface-hover); }
+
+/* ───────── INPUT ───────── */
+.field {
+  width: 100%; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 13px; padding: 12px 14px; color: var(--text); font: inherit; font-size: 14px;
+  transition: border-color .15s, box-shadow .15s; outline: none;
+}
+.field:focus { border-color: var(--brand-border); box-shadow: 0 0 0 4px var(--ring); }
+.field::placeholder { color: var(--text-faint); }
+
+/* ───────── CHIP ───────── */
+.chip { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  padding: 5px 11px; border-radius: 999px; background: var(--brand-soft); color: var(--brand-strong);
+  border: 1px solid var(--brand-border); }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px;
+  border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* animazioni */
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise .5s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes pop { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+.pop { animation: pop .25s ease both; }
+@keyframes shimmer { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
+.dot-live { animation: shimmer 1.6s ease-in-out infinite; }
+
+::selection { background: var(--brand-soft); }

@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ strategia.cliente }} — PED Manager</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+         background: #0f1117; color: #e0e0e0; }
+
+  /* TOPBAR */
+  .topbar { background: #1a1d27; border-bottom: 1px solid #2a2d3a;
+            padding: 12px 24px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 50; }
+  .back { color: #666; text-decoration: none; font-size: 13px; padding: 5px 10px;
+          border-radius: 6px; transition: all .15s; }
+  .back:hover { background: #1f2235; color: #fff; }
+  .logo { font-size: 16px; font-weight: 800; color: #4f8ef7; }
+  .nome-cliente { font-weight: 700; font-size: 15px; }
+  .periodo { color: #555; font-size: 12px; margin-left: 4px; }
+
+  /* LAYOUT */
+  .layout { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 49px); }
+  .sidebar { background: #13151f; border-right: 1px solid #2a2d3a; padding: 20px 14px;
+             position: sticky; top: 49px; height: calc(100vh - 49px); overflow-y: auto; }
+  .main { padding: 28px 32px; overflow-y: auto; }
+
+  /* SIDEBAR */
+  .sb-section { margin-bottom: 24px; }
+  .sb-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #444;
+              letter-spacing: 1px; margin-bottom: 8px; padding: 0 6px; }
+  .sb-btn { display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 12px;
+            border-radius: 8px; background: transparent; border: none; color: #aaa;
+            font-size: 13px; text-align: left; cursor: pointer; transition: all .15s; margin-bottom: 2px; }
+  .sb-btn:hover { background: #1f2235; color: #fff; }
+  .sb-btn .icon { width: 18px; text-align: center; font-size: 14px; }
+  .sb-btn.success { color: #4ade80; }
+  .sb-btn.success:hover { background: #0f2a1a; }
+  .sb-btn.meta { color: #a78bfa; }
+  .sb-btn.meta:hover { background: #1a0f3a; }
+  .sb-btn.danger { color: #f97316; }
+  .sb-btn.danger:hover { background: #2a1a0f; }
+  .sb-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  .stato-box { background: #0f1117; border-radius: 10px; padding: 12px 14px;
+               margin-bottom: 16px; border: 1px solid #2a2d3a; }
+  .stato-lbl { font-size: 10px; color: #444; text-transform: uppercase; margin-bottom: 5px; }
+  .stato-val { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-approvato { background: #4ade80; }
+  .dot-in_attesa { background: #60a5fa; box-shadow: 0 0 6px #60a5fa88; }
+  .dot-modifiche_richieste { background: #fb923c; }
+  .dot-non_inviato { background: #374151; }
+  .dot-schedulato { background: #a78bfa; }
+  .color-approvato { color: #4ade80; }
+  .color-in_attesa { color: #60a5fa; }
+  .color-modifiche_richieste { color: #fb923c; }
+  .color-non_inviato { color: #6b7280; }
+  .color-schedulato { color: #a78bfa; }
+
+  .stat-mini { font-size: 12px; color: #555; line-height: 1.9; padding: 0 2px; }
+  .stat-mini strong { color: #aaa; }
+
+  /* MAIN */
+  .tabs { display: flex; gap: 2px; margin-bottom: 20px; border-bottom: 1px solid #2a2d3a; }
+  .tab { padding: 9px 18px; cursor: pointer; font-size: 13px; font-weight: 600;
+         color: #666; border-bottom: 2px solid transparent; transition: .15s; }
+  .tab:hover { color: #aaa; }
+  .tab.active { color: #4f8ef7; border-bottom-color: #4f8ef7; }
+
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-size: 16px; font-weight: 700; }
+  .section-count { font-size: 13px; color: #555; }
+
+  /* POST CARDS */
+  .post-card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px;
+               margin-bottom: 8px; overflow: hidden; transition: border-color .15s; }
+  .post-card:hover { border-color: #3a3d4a; }
+  .post-card.open { border-color: #2962ff55; }
+  .post-header { padding: 11px 14px; display: flex; align-items: center; gap: 10px;
+                 cursor: pointer; user-select: none; }
+  .post-num { font-size: 11px; font-weight: 800; color: #4f8ef7; min-width: 46px; }
+  .post-arg { font-size: 11px; padding: 3px 8px; border-radius: 5px; font-weight: 700; }
+  .arg-presentazione { background: #0c1a3a; color: #60a5fa; }
+  .arg-igiene { background: #052e16; color: #4ade80; }
+  .arg-team { background: #2a0f04; color: #fb923c; }
+  .arg-implantologia { background: #1a0536; color: #c084fc; }
+  .post-caption-preview { font-size: 12px; color: #666; flex: 1; overflow: hidden;
+                           white-space: nowrap; text-overflow: ellipsis; }
+  .post-data { font-size: 11px; color: #555; white-space: nowrap; }
+  .post-edited { font-size: 10px; color: #f59e0b; }
+  .chevron { color: #444; font-size: 11px; transition: transform .2s; margin-left: 4px; }
+  .post-card.open .chevron { transform: rotate(180deg); }
+  .meta-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px;
+                background: #1a0f3a; color: #a78bfa; font-weight: 700; }
+
+  .post-body { display: none; padding: 0 14px 14px; border-top: 1px solid #1f2235; }
+  .post-card.open .post-body { display: block; }
+
+  .fl { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: .5px;
+        margin: 12px 0 4px; }
+  .fe { width: 100%; background: #0f1117; border: 1px solid #2a2d3a; border-radius: 6px;
+        padding: 8px 10px; color: #e0e0e0; font-size: 13px; font-family: inherit;
+        resize: vertical; }
+  .fe:focus { outline: none; border-color: #4f8ef7; }
+  .fe-sm { resize: none; height: auto; }
+  .field-row { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+  .post-media-preview { display: block; max-width: 220px; max-height: 220px; border-radius: 8px;
+        border: 1px solid #2a2d3a; margin-top: 4px; }
+  .btn-sm { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
+            border: none; cursor: pointer; transition: .15s; }
+  .btn-save { background: #2962ff; color: white; }
+  .btn-save:hover { background: #1e4fd8; }
+  .btn-regen { background: #1f2937; color: #9ca3af; border: 1px solid #374151; }
+  .btn-regen:hover { color: #fff; border-color: #555; }
+  .btn-ignora { background: transparent; color: #fb923c; border: 1px solid #7c2d12; }
+  .btn-ignora:hover { background: #2a0f04; color: #fdba74; }
+  .saved-ok { font-size: 11px; color: #4ade80; display: none; }
+
+  /* SPINNER */
+  .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #333;
+             border-top-color: #4f8ef7; border-radius: 50%; animation: spin .6s linear infinite;
+             vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; left: 24px; background: #1a1d27;
+           border: 1px solid #2a2d3a; border-radius: 10px; padding: 13px 18px;
+           font-size: 13px; transform: translateY(100px); opacity: 0;
+           transition: all .3s; z-index: 9998; max-width: 340px;
+           box-shadow: 0 8px 28px rgba(0,0,0,.45); }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.ok { border-color: #166534; color: #4ade80; }
+  .toast.err { border-color: #991b1b; color: #f87171; }
+  .toast.info { border-color: #1e3a5f; color: #60a5fa; }
+
+  /* MODALI */
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7);
+              backdrop-filter: blur(5px); z-index: 300; align-items: center; justify-content: center; }
+  .modal-bg.open { display: flex; }
+  .modal { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 14px;
+           padding: 26px 28px; width: 540px; max-width: 95vw; max-height: 85vh; overflow-y: auto; }
+  .modal h2 { font-size: 17px; font-weight: 700; margin-bottom: 18px; }
+  .modal-section { margin-bottom: 20px; }
+  .modal-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase;
+                         color: #555; letter-spacing: 1px; margin-bottom: 10px; }
+  .form-row { margin-bottom: 12px; }
+  .form-label { font-size: 11px; color: #555; text-transform: uppercase; margin-bottom: 4px; display: block; }
+  .form-input { width: 100%; background: #0f1117; border: 1px solid #2a2d3a; border-radius: 7px;
+                padding: 8px 11px; color: #e0e0e0; font-size: 13px; font-family: inherit; }
+  .form-input:focus { outline: none; border-color: #4f8ef7; }
+  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px;
+                  padding-top: 16px; border-top: 1px solid #2a2d3a; }
+  .btn-cancel { background: transparent; border: 1px solid #2a2d3a; color: #666;
+                padding: 8px 16px; border-radius: 7px; cursor: pointer; font-size: 13px; }
+  .btn-primary { background: #2962ff; color: white; border: none; padding: 8px 16px;
+                 border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 600; }
+  .btn-primary:hover { background: #1e4fd8; }
+  .btn-meta { background: #2a1a5a; color: #a78bfa; border: 1px solid #3d2a7a;
+              padding: 8px 16px; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 600; }
+  .btn-meta:hover { background: #3d2a7a; }
+
+  .cred-row { display: flex; align-items: center; gap: 8px; background: #0f1117;
+              border: 1px solid #2a2d3a; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; }
+  .cred-icon { font-size: 14px; }
+  .cred-info { flex: 1; }
+  .cred-name { font-size: 12px; font-weight: 600; }
+  .cred-val { font-size: 11px; color: #555; font-family: monospace; }
+  .cred-status { font-size: 11px; font-weight: 700; }
+  .cred-ok { color: #4ade80; }
+  .cred-no { color: #f87171; }
+
+  /* PROGRESS BAR */
+  .progress-wrap { background: #0f1117; border: 1px solid #2a2d3a; border-radius: 8px;
+                   padding: 14px 16px; margin-bottom: 16px; display: none; }
+  .progress-wrap.visible { display: block; }
+  .progress-label { font-size: 12px; color: #888; margin-bottom: 8px; }
+  .progress-bar-bg { background: #1f2235; border-radius: 4px; height: 6px; overflow: hidden; }
+  .progress-bar { background: linear-gradient(90deg, #2962ff, #4f8ef7); height: 100%;
+                  border-radius: 4px; transition: width .4s ease; }
+
+  /* NOTE MODIFICHE */
+  .note-modifiche { background: #2a0f04; border: 1px solid #7c2d12; border-radius: 8px;
+                    padding: 12px 14px; margin-bottom: 16px; font-size: 13px; color: #fb923c; }
+  .note-tit { font-weight: 700; margin-bottom: 4px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="/" class="back">← Clienti</a>
+  <span class="logo">PED</span>
+  <span class="nome-cliente">{{ strategia.cliente }}</span>
+  <span class="periodo">— {{ periodo }}</span>
+  <a href="/logout" class="back" style="margin-left:auto;" title="Esci dall'account">Esci ⎋</a>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <div class="stato-box">
+      <div class="stato-lbl">Stato approvazione</div>
+      {% if sessione %}
+        {% set stato = sessione.stato %}
+        <div class="stato-val color-{{ stato }}">
+          <span class="dot dot-{{ stato }}"></span>
+          {% if stato == 'approvato' %}Approvato
+          {% elif stato == 'in_attesa' %}In attesa risposta
+          {% elif stato == 'modifiche_richieste' %}Modifiche richieste
+          {% elif stato == 'schedulato' %}Schedulato su Meta
+          {% else %}{{ stato }}{% endif %}
+        </div>
+        {% if sessione.data_risposta %}
+          <div style="font-size:11px;color:#444;margin-top:4px;">{{ sessione.data_risposta[:10] }}</div>
+        {% endif %}
+      {% else %}
+        <div class="stato-val color-non_inviato">
+          <span class="dot dot-non_inviato"></span>Non inviato
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Contenuti</div>
+      <button class="sb-btn" onclick="genera()">
+        <span class="icon">⚡</span>Rigenera con AI
+      </button>
+      <button class="sb-btn" onclick="generaPdf()">
+        <span class="icon">📄</span>Aggiorna PDF
+      </button>
+      <a href="/pdf/{{ cliente }}" target="_blank" class="sb-btn" style="text-decoration:none;">
+        <span class="icon">👁</span>Anteprima PDF
+      </a>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Media</div>
+      <button class="sb-btn" onclick="avviaMedia()">
+        <span class="icon">🖼</span>Scarica e classifica media
+      </button>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Workflow</div>
+      <button class="sb-btn success" onclick="invia()">
+        <span class="icon">✉</span>Invia al cliente
+      </button>
+      <button class="sb-btn meta" id="btn-meta-schedula"
+              onclick="schedulaBrowser()">
+        <span class="icon">🤖</span>Schedula via Browser
+      </button>
+      <button class="sb-btn" style="color:#34d399;border:1px solid #34d39944;" onclick="avviaTestFlow()">
+        <span class="icon">🚀</span>Test End-to-End
+      </button>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Statistiche</div>
+      <div class="stat-mini">
+        <div>Post totali: <strong>{{ ped|length }}</strong></div>
+        <div>Stories: <strong>{{ stories|length }}</strong></div>
+        <div>Originali: <strong>{{ stories|selectattr('tipo','eq','originale')|list|length }}</strong></div>
+        <div>Repost: <strong>{{ stories|selectattr('tipo','eq','repost')|list|length }}</strong></div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Configurazione</div>
+      <button class="sb-btn" onclick="apriImpostazioni()">
+        <span class="icon">⚙</span>Tono e orari
+      </button>
+      <button class="sb-btn" onclick="apriMeta()">
+        <span class="icon">🔗</span>Credenziali Meta
+      </button>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Modello AI</div>
+      <select id="ai-model-select" class="ai-select" onchange="cambiaModello(this.value)">
+        <option>Caricamento…</option>
+      </select>
+      <button class="ai-check-btn" id="ai-check-btn" onclick="verificaModelli()">⟳ Verifica disponibilità</button>
+      <div class="ai-model-hint" id="ai-model-hint">Se un modello esaurisce il limite, passa automaticamente al successivo gratuito.</div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Aiuto</div>
+      <button class="sb-btn" style="color:#fbbf24;" onclick="avviaTutorial()">
+        <span class="icon">🎓</span>Tutorial guidato
+      </button>
+      <button class="sb-btn" style="color:#4f8ef7;" onclick="apriChat()">
+        <span class="icon">💬</span>Assistente AI
+      </button>
+    </div>
+
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- note modifiche se richieste -->
+    {% if sessione and sessione.stato == 'modifiche_richieste' and sessione.note_modifiche %}
+    <div class="note-modifiche">
+      <div class="note-tit">✎ Note del cliente:</div>
+      {{ sessione.note_modifiche }}
+      <div class="field-row">
+        <button class="btn-sm btn-regen" id="btn-rigenera-tutti" onclick="rigeneraTutti()">↺ Rigenera tutti i post con queste note</button>
+        <button class="btn-sm btn-ignora" id="btn-ignora-note" onclick="ignoraNote()">✕ Ignora richiesta</button>
+      </div>
+    </div>
+    <div class="progress-wrap" id="rigenera-progress-wrap">
+      <div class="progress-label" id="rigenera-progress-label">Rigenerazione in corso...</div>
+      <div class="progress-bar-bg"><div class="progress-bar" id="rigenera-progress-bar" style="width:0%"></div></div>
+    </div>
+    {% endif %}
+
+    <!-- progress bar generazione -->
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="progress-label" id="progress-label">Generazione in corso...</div>
+      <div class="progress-bar-bg"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div>
+    </div>
+
+    <!-- progress bar media -->
+    <div class="progress-wrap" id="media-progress-wrap">
+      <div class="progress-label" id="media-progress-label">Classificazione media...</div>
+      <div class="progress-bar-bg"><div class="progress-bar" id="media-progress-bar" style="width:0%"></div></div>
+      <div id="media-progress-detail" style="font-size:11px;color:#666;margin-top:6px;"></div>
+    </div>
+
+    <!-- SWITCH PIATTAFORMA -->
+    <div class="platform-switch" id="platform-switch">
+      <button class="platform-btn fb active" id="pf-fb" onclick="cambiaPiattaforma('fb')">
+        <span class="pf-ico">📘</span> Facebook
+      </button>
+      <button class="platform-btn ig" id="pf-ig" onclick="cambiaPiattaforma('ig')">
+        <span class="pf-ico">📷</span> Instagram
+      </button>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" id="tab-btn-post" onclick="showTab('post',this)">Post <span style="color:#555">({{ ped|length }})</span></div>
+      <div class="tab" id="tab-btn-stories" onclick="showTab('stories',this)">Stories <span style="color:#555">({{ stories|length }})</span></div>
+    </div>
+
+    <!-- TAB POST -->
+    <div id="tab-post">
+      <div class="section-header">
+        <span class="section-title">Post — IG & FB</span>
+        <span class="section-count">Lunedì + Giovedì · 2 a settimana</span>
+      </div>
+
+      {% for post in ped %}
+      {% set arg_class = {
+        'Presentazione Studio': 'arg-presentazione',
+        'Igiene E Prevenzione': 'arg-igiene',
+        'Team E Staff': 'arg-team',
+        'Implantologia': 'arg-implantologia'
+      }.get(post.argomento, 'arg-presentazione') %}
+      <div class="post-card" id="post-{{ post.numero }}">
+        <div class="post-header" onclick="toggleCard(this)">
+          <span class="post-num">#{{ post.numero }}</span>
+          <span class="post-arg {{ arg_class }}">{{ post.argomento }}</span>
+          <span class="post-caption-preview">{{ post.caption[:70] }}...</span>
+          <span class="post-data">{{ post.data }} {{ post.orario }}</span>
+          {% if post.get('meta_fb_id') or post.get('meta_ig_id') %}
+            <span class="meta-badge">META ✓</span>
+          {% endif %}
+          {% if post.get('modificato_manualmente') %}
+            <span class="post-edited">✎</span>
+          {% endif %}
+          <span class="chevron">▾</span>
+        </div>
+        <div class="post-body">
+          {% if post.get('design_url') %}
+          <div class="fl">Media scelto</div>
+          <img src="{{ post.design_url }}" class="post-media-preview" alt="Media post #{{ post.numero }}">
+          {% endif %}
+
+          <div class="fl">Caption</div>
+          <textarea class="fe" rows="5" id="caption-{{ post.numero }}">{{ post.caption }}</textarea>
+
+          <div class="fl">Hashtag</div>
+          <textarea class="fe fe-sm" rows="2" id="hashtag-{{ post.numero }}">{{ post.hashtag }}</textarea>
+
+          <div class="fl">Nota grafica</div>
+          <input class="fe" id="nota-{{ post.numero }}" value="{{ post.nota_grafica }}">
+
+          <div class="fl">Orario pubblicazione</div>
+          <input class="fe" id="orario-{{ post.numero }}" value="{{ post.orario }}" style="width:110px;">
+
+          {% if post.get('meta_fb_id') %}
+          <div style="font-size:11px;color:#a78bfa;margin-top:8px;">
+            📅 FB schedulato — ID: {{ post.meta_fb_id }}
+          </div>
+          {% endif %}
+
+          <div class="field-row">
+            <button class="btn-sm btn-save" onclick="salvaPost({{ post.numero }})">Salva</button>
+            <button class="btn-sm btn-regen" onclick="rigeneraPost({{ post.numero }}, event)">↺ AI</button>
+            <span class="saved-ok" id="saved-{{ post.numero }}">✓ Salvato</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+      {% if not ped %}
+      <div style="text-align:center;padding:60px 20px;color:#444;">
+        <div style="font-size:40px;margin-bottom:12px;">✦</div>
+        <div style="font-size:15px;margin-bottom:8px;">Nessun contenuto generato</div>
+        <div style="font-size:13px;">Clicca "Rigenera con AI" nella sidebar</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- TAB STORIES -->
+    <div id="tab-stories" style="display:none">
+      <div class="section-header">
+        <span class="section-title">Stories — IG & FB</span>
+        <span class="section-count">4 a settimana · 2 originali + 2 repost</span>
+      </div>
+
+      {% for story in stories %}
+      <div class="post-card" id="story-{{ story.numero }}">
+        <div class="post-header" onclick="toggleCard(this)">
+          <span class="post-num">#{{ story.numero }}</span>
+          <span class="post-arg {{ 'arg-igiene' if story.tipo == 'originale' else 'arg-team' }}">
+            {{ 'ORIGINALE' if story.tipo == 'originale' else 'REPOST' }}
+          </span>
+          <span class="post-caption-preview" style="color:#777">{{ story.argomento }}</span>
+          <span class="post-data">{{ story.data }} {{ story.orario }}</span>
+          <span class="chevron">▾</span>
+        </div>
+        <div class="post-body">
+          {% if story.tipo == 'originale' %}
+            <div class="fl">Testo story</div>
+            <textarea class="fe fe-sm" rows="3" id="stesto-{{ story.numero }}">{{ story.testo }}</textarea>
+            <div class="fl">Musica suggerita</div>
+            <input class="fe" id="smusica-{{ story.numero }}" value="{{ story.musica_suggerita }}">
+            <div class="fl">Nota grafica</div>
+            <input class="fe" id="snota-{{ story.numero }}" value="{{ story.nota_grafica }}">
+
+            <div class="fl">Immagine</div>
+            <img src="{{ story.media_url }}" class="post-media-preview" id="smedia-preview-{{ story.numero }}"
+                 style="{{ '' if story.get('media_url') else 'display:none;' }}" alt="Immagine story #{{ story.numero }}">
+            <input type="file" accept="image/*" id="smedia-input-{{ story.numero }}" style="display:none"
+                   onchange="caricaImmagineStory({{ story.numero }})">
+
+            <div class="field-row">
+              <button class="btn-sm btn-save" onclick="salvaStory({{ story.numero }})">Salva</button>
+              <button class="btn-sm btn-regen" onclick="document.getElementById('smedia-input-{{ story.numero }}').click()">📷 Carica immagine</button>
+              <span class="saved-ok" id="ssaved-{{ story.numero }}">✓ Salvato</span>
+            </div>
+          {% else %}
+            <div style="font-size:13px;color:#666;padding:12px 0;">
+              <strong style="color:#aaa">Repost di:</strong> {{ story.riferimento_post }}<br>
+              <em style="font-size:12px;color:#555;margin-top:4px;display:block;">{{ story.nota }}</em>
+            </div>
+            {% if story.get('sticker_suggeriti') %}
+            <div style="font-size:11px;color:#555;margin-top:4px;">
+              Sticker: {{ story.sticker_suggeriti | join(', ') }}
+            </div>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL IMPOSTAZIONI -->
+<div class="modal-bg" id="modal-imp">
+  <div class="modal">
+    <h2>⚙ Impostazioni cliente</h2>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Tono comunicazione</div>
+      <div class="form-row">
+        <label class="form-label">Tono e stile</label>
+        <input class="form-input" id="imp-tono" value="{{ strategia.tono }}">
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Orari pubblicazione post</div>
+      <div class="form-row-2">
+        {% for orario in strategia.orari_post %}
+        <div>
+          <label class="form-label">Orario {{ loop.index }}</label>
+          <input class="form-input orario-post-input" value="{{ orario }}">
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Hashtag fissi (sempre presenti)</div>
+      <div class="form-row">
+        <textarea class="form-input" id="imp-hashtag" rows="3">{{ strategia.hashtag_fissi | join(' ') }}</textarea>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Argomenti da trattare</div>
+      <div class="form-row">
+        <label class="form-label">Argomenti (uno per riga)</label>
+        <textarea class="form-input" id="imp-argomenti" rows="5">{{ strategia.argomenti | join('\n') }}</textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="chiudiModal('modal-imp')">Annulla</button>
+      <button class="btn-primary" onclick="salvaImpostazioni()">Salva impostazioni</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL META -->
+<div class="modal-bg" id="modal-meta">
+  <div class="modal">
+    <h2>🔗 Credenziali Meta API</h2>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Stato connessione</div>
+      <div id="meta-status-area">
+        <div style="color:#555;font-size:13px;">Clicca "Verifica" per controllare le credenziali</div>
+      </div>
+      <button class="btn-sm btn-regen" style="margin-top:10px;" onclick="verificaMeta()">
+        Verifica connessione
+      </button>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Credenziali (modifica nel file .env)</div>
+      <div class="cred-row">
+        <span class="cred-icon">🔑</span>
+        <div class="cred-info">
+          <div class="cred-name">META_ACCESS_TOKEN</div>
+          <div class="cred-val" id="cred-token">{{ '••••••' + env_meta_token[-6:] if env_meta_token else 'Non configurato' }}</div>
+        </div>
+        <span class="cred-status {{ 'cred-ok' if env_meta_token else 'cred-no' }}">
+          {{ '✓' if env_meta_token else '✗' }}
+        </span>
+      </div>
+      <div class="cred-row">
+        <span class="cred-icon">📘</span>
+        <div class="cred-info">
+          <div class="cred-name">META_PAGE_ID_FB</div>
+          <div class="cred-val">{{ env_page_id if env_page_id else 'Non configurato' }}</div>
+        </div>
+        <span class="cred-status {{ 'cred-ok' if env_page_id else 'cred-no' }}">
+          {{ '✓' if env_page_id else '✗' }}
+        </span>
+      </div>
+      <div class="cred-row">
+        <span class="cred-icon">📸</span>
+        <div class="cred-info">
+          <div class="cred-name">META_INSTAGRAM_ACCOUNT_ID</div>
+          <div class="cred-val">{{ env_ig_id if env_ig_id else 'Non configurato' }}</div>
+        </div>
+        <span class="cred-status {{ 'cred-ok' if env_ig_id else 'cred-no' }}">
+          {{ '✓' if env_ig_id else '✗' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Come ottenere le credenziali</div>
+      <ol style="font-size:12px;color:#666;line-height:2;padding-left:18px;">
+        <li>Vai su <strong style="color:#aaa">developers.facebook.com</strong> → Crea app → tipo Business</li>
+        <li>Aggiungi prodotto <strong style="color:#aaa">Instagram Graph API</strong></li>
+        <li>Genera un Page Access Token con permessi: pages_manage_posts, instagram_basic, instagram_content_publish</li>
+        <li>Trova il <strong style="color:#aaa">Page ID</strong> dalla pagina FB → Info della pagina</li>
+        <li>Trova l'<strong style="color:#aaa">IG Account ID</strong> da Graph API Explorer → /me/accounts</li>
+        <li>Metti tutto nel file <strong style="color:#aaa">.env</strong> e riavvia</li>
+      </ol>
+    </div>
+
+    <div class="modal-section" id="meta-dry-section">
+      <div class="modal-section-title">Test schedulazione</div>
+      <button class="btn-meta" onclick="schedulaDryRun()">
+        Dry run (simula senza pubblicare)
+      </button>
+      <div id="dry-run-result" style="margin-top:10px;font-size:12px;color:#555;"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="chiudiModal('modal-meta')">Chiudi</button>
+      <button class="btn-meta" onclick="schedulaMeta()">
+        📅 Schedula tutto su Meta
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CLIENTE = "{{ cliente }}";
+
+/* ---- tabs ---- */
+function showTab(tab, el) {
+  document.getElementById('tab-post').style.display = tab === 'post' ? 'block' : 'none';
+  document.getElementById('tab-stories').style.display = tab === 'stories' ? 'block' : 'none';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+/* ---- switch piattaforma Facebook / Instagram ---- */
+let piattaforma = 'fb';
+function cambiaPiattaforma(p) {
+  piattaforma = p;
+  document.getElementById('pf-fb').classList.toggle('active', p === 'fb');
+  document.getElementById('pf-ig').classList.toggle('active', p === 'ig');
+  // Facebook = solo Post (i feed FB). Instagram = Post + Stories.
+  const stTab = document.getElementById('tab-btn-stories');
+  if (p === 'fb') {
+    stTab.style.display = 'none';
+    showTab('post', document.getElementById('tab-btn-post'));
+  } else {
+    stTab.style.display = '';
+  }
+}
+
+/* ---- switch modello AI ---- */
+function statoIcona(st) {
+  if (!st || st.state === 'unknown') return {ico:'•', txt:''};
+  if (st.state === 'ok') return {ico:'✅', txt:' · disponibile'};
+  if (st.state === 'error') return {ico:'❌', txt:' · non raggiungibile'};
+  if (st.state === 'limited') {
+    const min = Math.max(1, Math.round((st.retry_in || 60)/60));
+    return {ico:'⏳', txt:` · limite (riprova ~${min}m)`};
+  }
+  return {ico:'•', txt:''};
+}
+function renderModelli(d) {
+  const sel = document.getElementById('ai-model-select');
+  const status = d.status || {};
+  const free = d.models.filter(m => m.tier === 'free');
+  const prem = d.models.filter(m => m.tier === 'premium');
+  let html = '<optgroup label="Gratuiti">';
+  free.forEach(m => {
+    const s = statoIcona(status[m.id]);
+    html += `<option value="${m.id}" ${m.id === d.selected ? 'selected' : ''}>${s.ico} ${m.label}${s.txt}</option>`;
+  });
+  html += '</optgroup><optgroup label="Premium (presto)">';
+  prem.forEach(m => { html += `<option value="${m.id}" disabled>🔒 ${m.label}</option>`; });
+  html += '</optgroup>';
+  sel.innerHTML = html;
+}
+async function caricaModelli() {
+  try { renderModelli(await (await fetch('/api/ai_models')).json()); } catch (e) {}
+}
+async function verificaModelli() {
+  const btn = document.getElementById('ai-check-btn');
+  btn.disabled = true; btn.textContent = '⟳ Verifica in corso…';
+  try {
+    const chk = await (await fetch('/api/ai_models/check', {method:'POST'})).json();
+    const d = await (await fetch('/api/ai_models')).json();
+    d.status = chk.status || d.status;
+    renderModelli(d);
+    const ok = Object.values(chk.status||{}).filter(s => s.state === 'ok').length;
+    toast(`${ok} modelli gratuiti disponibili ora`, 'info');
+  } catch (e) { toast('Verifica fallita', 'err'); }
+  btn.disabled = false; btn.textContent = '⟳ Verifica disponibilità';
+}
+async function cambiaModello(mid) {
+  const r = await fetch('/api/ai_model', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({model: mid})
+  });
+  const d = await r.json();
+  if (d.ok) toast('Modello AI: ' + mid);
+  else toast(d.errore || 'Errore', 'err');
+}
+document.addEventListener('DOMContentLoaded', () => {
+  caricaModelli();
+  cambiaPiattaforma('fb');  // default: solo Facebook
+});
+
+function toggleCard(header) {
+  header.parentElement.classList.toggle('open');
+}
+
+/* ---- toast ---- */
+function toast(msg, tipo = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${tipo}`;
+  setTimeout(() => t.className = 'toast', 3500);
+}
+
+/* ---- modali ---- */
+function apriImpostazioni() {
+  document.getElementById('modal-imp').classList.add('open');
+}
+function apriMeta() {
+  document.getElementById('modal-meta').classList.add('open');
+}
+function chiudiModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.querySelectorAll('.modal-bg').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+/* ---- salva post ---- */
+async function salvaPost(num) {
+  const body = {
+    caption: document.getElementById(`caption-${num}`).value,
+    hashtag: document.getElementById(`hashtag-${num}`).value,
+    nota_grafica: document.getElementById(`nota-${num}`).value,
+    orario: document.getElementById(`orario-${num}`).value,
+  };
+  const r = await fetch(`/api/post/${CLIENTE}/${num}`, {
+    method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+  });
+  if (r.ok) {
+    const badge = document.getElementById(`saved-${num}`);
+    badge.style.display = 'inline';
+    setTimeout(() => badge.style.display = 'none', 2000);
+    toast('Salvato!');
+  } else { toast('Errore salvataggio', 'err'); }
+}
+
+/* ---- rigenera post ---- */
+async function rigeneraPost(num, event) {
+  const btn = event.target;
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+  try {
+    const r = await fetch(`/api/rigenera/${CLIENTE}/${num}`, {method: 'POST'});
+    const d = await r.json();
+    if (d.ok && d.post) {
+      document.getElementById(`caption-${num}`).value = d.post.caption;
+      document.getElementById(`hashtag-${num}`).value = d.post.hashtag;
+      document.getElementById(`nota-${num}`).value = d.post.nota_grafica || '';
+      toast('Rigenerato con AI!');
+    } else {
+      toast(d.errore || 'Errore rigenerazione', 'err');
+    }
+  } catch { toast('Errore di connessione', 'err'); }
+  btn.innerHTML = '↺ AI';
+  btn.disabled = false;
+}
+
+/* ---- salva story ---- */
+async function salvaStory(num) {
+  const body = {
+    testo: document.getElementById(`stesto-${num}`)?.value,
+    musica_suggerita: document.getElementById(`smusica-${num}`)?.value,
+    nota_grafica: document.getElementById(`snota-${num}`)?.value,
+  };
+  const r = await fetch(`/api/story/${CLIENTE}/${num}`, {
+    method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+  });
+  if (r.ok) {
+    const b = document.getElementById(`ssaved-${num}`);
+    if (b) { b.style.display = 'inline'; setTimeout(() => b.style.display = 'none', 2000); }
+    toast('Story salvata!');
+  } else { toast('Errore', 'err'); }
+}
+
+/* ---- carica immagine story ---- */
+async function caricaImmagineStory(num) {
+  const input = document.getElementById(`smedia-input-${num}`);
+  const file = input.files[0];
+  if (!file) return;
+  const fd = new FormData();
+  fd.append('file', file);
+  const r = await fetch(`/api/story/${CLIENTE}/${num}/media`, {method: 'POST', body: fd});
+  const d = await r.json();
+  if (r.ok && d.ok) {
+    const img = document.getElementById(`smedia-preview-${num}`);
+    img.src = d.media_url + '?t=' + Date.now();
+    img.style.display = 'block';
+    toast('Immagine caricata!');
+  } else { toast(d.errore || 'Errore caricamento immagine', 'err'); }
+  input.value = '';
+}
+
+/* ---- ignora richiesta di modifiche del cliente ---- */
+async function ignoraNote() {
+  if (!confirm('Sei sicuro di voler ignorare questa richiesta del cliente? Il copy NON verrà rigenerato e la nota sparirà dal pannello.')) return;
+  const btn = document.getElementById('btn-ignora-note');
+  btn.disabled = true;
+  const r = await fetch(`/api/ignora_note/${CLIENTE}`, {method: 'POST'});
+  const d = await r.json();
+  if (r.ok && d.ok) {
+    toast('Richiesta ignorata.');
+    document.querySelector('.note-modifiche').style.display = 'none';
+  } else {
+    toast(d.errore || 'Errore', 'err');
+    btn.disabled = false;
+  }
+}
+
+/* ---- rigenera tutti i post con le note del cliente ---- */
+async function rigeneraTutti() {
+  if (!confirm('Rigenerare TUTTI i post applicando le note del cliente? Sovrascrive i copy esistenti.')) return;
+  const btn = document.getElementById('btn-rigenera-tutti');
+  const pw = document.getElementById('rigenera-progress-wrap');
+  const pb = document.getElementById('rigenera-progress-bar');
+  const pl = document.getElementById('rigenera-progress-label');
+  btn.disabled = true;
+  pw.classList.add('visible');
+  const r = await fetch(`/api/rigenera_tutti/${CLIENTE}`, {method: 'POST'});
+  const d = await r.json();
+  if (!d.ok) { toast(d.errore || 'Errore avvio rigenerazione', 'err'); btn.disabled = false; return; }
+  toast('Rigenerazione di tutti i post avviata...', 'info');
+
+  const iv = setInterval(async () => {
+    const rs = await fetch(`/api/rigenera_tutti/${CLIENTE}/stato`);
+    const ds = await rs.json();
+    const pct = ds.totale ? Math.round((ds.fatti / ds.totale) * 100) : 0;
+    pb.style.width = pct + '%';
+    pl.textContent = `Rigenerazione in corso... ${ds.fatti}/${ds.totale}`;
+    if (!ds.in_corso && ds.totale > 0) {
+      clearInterval(iv);
+      pb.style.width = '100%';
+      pl.textContent = 'Completato! Ricarica la pagina.';
+      toast('Tutti i post rigenerati! Ricarica la pagina.', 'info');
+      setTimeout(() => location.reload(), 2500);
+    }
+  }, 2000);
+}
+
+/* ---- genera ---- */
+async function genera() {
+  if (!confirm('Rigenera TUTTI i contenuti? Sovrascrive quelli esistenti. Richiede 2-4 minuti.')) return;
+  const pw = document.getElementById('progress-wrap');
+  const pb = document.getElementById('progress-bar');
+  const pl = document.getElementById('progress-label');
+  pw.classList.add('visible');
+  pb.style.width = '0%';
+  pl.textContent = 'Avvio generazione…';
+
+  const r = await fetch(`/api/genera/${CLIENTE}`, {method: 'POST'});
+  const d = await r.json();
+  if (d && d.ok === false) { pl.textContent = d.errore || 'Errore'; toast(d.errore || 'Errore', 'err'); return; }
+
+  // polla lo stato reale: la barra avanza davvero, e ricarica SOLO a fine generazione
+  const iv = setInterval(async () => {
+    let st;
+    try { st = await (await fetch(`/api/genera/${CLIENTE}/stato`)).json(); }
+    catch { return; }
+    const tot = st.totale || 0, fatti = st.fatti || 0;
+    const pct = tot ? Math.round(fatti / tot * 100) : 5;
+    pb.style.width = pct + '%';
+    const fase = st.fase === 'stories' ? 'storie' : 'post';
+    pl.textContent = `Generazione ${fase}… ${fatti}/${tot || '?'}`;
+
+    if (!st.in_corso) {
+      clearInterval(iv);
+      if (st.errore) {
+        pb.style.width = '100%';
+        pb.style.background = '#f87171';
+        const limite = /rate.?limit|429|tokens per day|TPD/i.test(st.errore);
+        pl.textContent = limite
+          ? '⚠ Limite giornaliero AI raggiunto (Groq free). Riprova più tardi o passa a un piano a pagamento.'
+          : ('⚠ Errore: ' + st.errore.slice(0, 160));
+        toast(limite ? 'Limite AI Groq raggiunto' : 'Errore generazione', 'err');
+        return;
+      }
+      pb.style.width = '100%';
+      pl.textContent = '✓ Completato! Ricarico…';
+      toast('Contenuti rigenerati!', 'info');
+      setTimeout(() => location.reload(), 1500);
+    }
+  }, 2000);
+}
+
+/* ---- media ---- */
+let mediaPollInterval = null;
+
+async function avviaMedia() {
+  if (!confirm('Scarica e classifica i media da Google Drive con AI? Può richiedere fino a 1-2 ore.')) return;
+  const r = await fetch(`/api/media/scarica/${CLIENTE}`, {method: 'POST'});
+  const d = await r.json();
+  if (!d.ok) { toast(d.errore || 'Errore avvio', 'err'); return; }
+  toast('Download e classificazione media avviati...', 'info');
+  document.getElementById('media-progress-wrap').classList.add('visible');
+  pollMedia();
+}
+
+async function pollMedia() {
+  if (mediaPollInterval) clearInterval(mediaPollInterval);
+  const tick = async () => {
+    const r = await fetch(`/api/media/stato/${CLIENTE}`);
+    const d = await r.json();
+    const pw = document.getElementById('media-progress-wrap');
+    const pb = document.getElementById('media-progress-bar');
+    const pl = document.getElementById('media-progress-label');
+    const pdet = document.getElementById('media-progress-detail');
+
+    if (d.totale > 0 || d.in_corso) pw.classList.add('visible');
+
+    const pct = d.totale ? Math.round(d.classificate / d.totale * 100) : 0;
+    pb.style.width = pct + '%';
+
+    if (d.completato) {
+      pl.textContent = `✓ Classificazione completata — ${d.classificate}/${d.totale}`;
+      clearInterval(mediaPollInterval);
+      mediaPollInterval = null;
+    } else if (d.in_corso) {
+      pl.textContent = `Classificazione in corso... ${pct}% (${d.classificate}/${d.totale})`;
+    } else {
+      pl.textContent = `In attesa... (${d.classificate}/${d.totale})`;
+    }
+
+    const dettagli = Object.entries(d.per_argomento || {}).map(([k,v]) => `${k}: ${v}`).join('  ·  ');
+    pdet.textContent = dettagli;
+  };
+  await tick();
+  mediaPollInterval = setInterval(tick, 5000);
+}
+
+// riprende il polling se al caricamento della pagina è già in corso una classificazione
+(async () => {
+  try {
+    const r = await fetch(`/api/media/stato/${CLIENTE}`);
+    const d = await r.json();
+    if (d.in_corso || (d.totale > 0 && !d.completato)) {
+      document.getElementById('media-progress-wrap').classList.add('visible');
+      pollMedia();
+    }
+  } catch (e) {}
+})();
+
+/* ---- genera pdf ---- */
+async function generaPdf() {
+  toast('Generazione PDF in corso...', 'info');
+  const r = await fetch(`/api/pdf/${CLIENTE}`, {method: 'POST'});
+  if (r.ok) toast('PDF aggiornato!');
+  else toast('Errore PDF', 'err');
+}
+
+/* ---- invia ---- */
+async function invia() {
+  if (!confirm('Invia il piano al cliente via email?')) return;
+  toast('Invio mail in corso...', 'info');
+  const r = await fetch(`/api/invia/${CLIENTE}`, {method: 'POST'});
+  if (r.ok) toast('Email inviata! Attendo risposta.');
+  else toast('Errore invio', 'err');
+}
+
+/* ---- impostazioni ---- */
+async function salvaImpostazioni() {
+  const orari = Array.from(document.querySelectorAll('.orario-post-input')).map(i => i.value.trim());
+  const hashtag = document.getElementById('imp-hashtag').value.trim().split(/\s+/);
+  const argomenti = document.getElementById('imp-argomenti').value.trim().split('\n').map(s => s.trim()).filter(Boolean);
+  const payload = {
+    tono: document.getElementById('imp-tono').value.trim(),
+    orari_post: orari,
+    hashtag_fissi: hashtag,
+    argomenti: argomenti
+  };
+  const r = await fetch(`/api/strategia/${CLIENTE}`, {
+    method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+  });
+  if (r.ok) { toast('Impostazioni salvate!'); chiudiModal('modal-imp'); }
+  else toast('Errore salvataggio', 'err');
+}
+
+/* ---- meta verifica ---- */
+async function verificaMeta() {
+  const area = document.getElementById('meta-status-area');
+  area.innerHTML = '<span class="spinner"></span> Verifico...';
+  const r = await fetch(`/api/meta/verifica`);
+  const d = await r.json();
+  let html = '';
+  if (d.token) {
+    html += `<div style="color:#4ade80;font-size:13px;margin-bottom:6px;">✓ Token valido — ${d.nome_account || ''}</div>`;
+  } else {
+    html += `<div style="color:#f87171;font-size:13px;margin-bottom:6px;">✗ Token non valido</div>`;
+  }
+  if (d.pagina_fb) {
+    html += `<div style="color:#4ade80;font-size:13px;margin-bottom:4px;">✓ Pagina FB: ${d.nome_pagina || ''}</div>`;
+  }
+  if (d.ig) {
+    html += `<div style="color:#4ade80;font-size:13px;margin-bottom:4px;">✓ IG: @${d.ig_username || ''}</div>`;
+  }
+  if (d.errori && d.errori.length) {
+    d.errori.forEach(e => {
+      html += `<div style="color:#fb923c;font-size:12px;margin-top:4px;">⚠ ${e}</div>`;
+    });
+  }
+  area.innerHTML = html || '<div style="color:#555">Nessun dato</div>';
+}
+
+/* ---- meta schedula ---- */
+async function schedulaMeta() {
+  if (!confirm('Schedula tutti i post su Instagram e Facebook?')) return;
+  chiudiModal('modal-meta');
+  toast('Schedulazione Meta in corso...', 'info');
+  const r = await fetch(`/api/meta/schedula/${CLIENTE}`, {method: 'POST'});
+  const d = await r.json();
+  if (d.ok) toast(`Schedulati: FB ${d.ok_fb}/${d.totale} · IG ${d.ok_ig}/${d.totale}`);
+  else toast(d.errore || 'Errore schedulazione', 'err');
+}
+
+/* ---- schedula via browser ---- */
+async function schedulaBrowser() {
+  if (!confirm('Apre un browser e schedula tutti i post su Meta Business Suite. Continua?')) return;
+  toast('Browser in avvio... controlla il desktop', 'info');
+  const r = await fetch(`/api/meta/browser/${CLIENTE}`, {method: 'POST'});
+  const d = await r.json();
+  if (d.ok) toast('Browser avviato! Controlla il desktop.');
+  else toast(d.errore || 'Errore', 'err');
+}
+
+/* ---- test end-to-end ---- */
+let testFlowInterval = null;
+
+function avviaTestFlow() {
+  // mostra modale con il setup (campo email + avvia)
+  document.getElementById('modal-test').style.display = 'flex';
+  document.getElementById('test-setup').style.display = 'block';
+  document.getElementById('test-run').style.display = 'none';
+  document.getElementById('test-log').innerHTML = '';
+  document.getElementById('test-email').focus();
+}
+
+async function lanciaTestFlow() {
+  const email = document.getElementById('test-email').value.trim();
+  if (!email || !email.includes('@')) { toast('Inserisci un indirizzo email valido', 'err'); return; }
+
+  // passa dal setup alla vista di esecuzione
+  document.getElementById('test-setup').style.display = 'none';
+  document.getElementById('test-run').style.display = 'block';
+  document.getElementById('test-log').innerHTML = '';
+  document.getElementById('test-status').textContent = 'Avvio...';
+
+  const r = await fetch(`/api/test_flow/${CLIENTE}`, {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({email})
+  });
+  const d = await r.json();
+  if (!d.ok) {
+    document.getElementById('test-status').textContent = d.errore || 'Errore';
+    return;
+  }
+
+  // poll log ogni secondo
+  testFlowInterval = setInterval(async () => {
+    const r2 = await fetch('/api/test_flow/log');
+    const d2 = await r2.json();
+    const logEl = document.getElementById('test-log');
+    logEl.innerHTML = d2.log.map(l => {
+      let color = '#ccc';
+      if (l.startsWith('✅')) color = '#4ade80';
+      else if (l.startsWith('✗')) color = '#f87171';
+      else if (l.startsWith('⚠')) color = '#fbbf24';
+      else if (l.startsWith('▶')) color = '#60a5fa';
+      else if (l.startsWith('⏳')) color = '#a78bfa';
+      return `<div style="color:${color};margin-bottom:4px;">${l}</div>`;
+    }).join('');
+    logEl.scrollTop = logEl.scrollHeight;
+    document.getElementById('test-status').textContent = d2.running ? '🔄 In corso...' : '✅ Completato';
+    if (!d2.running) clearInterval(testFlowInterval);
+  }, 1000);
+}
+
+function chiudiTestModal() {
+  document.getElementById('modal-test').style.display = 'none';
+  if (testFlowInterval) clearInterval(testFlowInterval);
+}
+
+/* ---- dry run ---- */
+async function schedulaDryRun() {
+  const div = document.getElementById('dry-run-result');
+  div.textContent = 'Simulazione in corso...';
+  const r = await fetch(`/api/meta/dry_run/${CLIENTE}`, {method: 'POST'});
+  const d = await r.json();
+  if (d.ok) {
+    div.innerHTML = `<span style="color:#4ade80;">Dry run OK — ${d.totale} post simulati. Nessuna pubblicazione effettuata.</span>`;
+  } else {
+    div.innerHTML = `<span style="color:#f87171;">${d.errore}</span>`;
+  }
+}
+</script>
+
+<!-- MODALE TEST END-TO-END -->
+<div id="modal-test" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#12141f;border:1px solid #2a2d3a;border-radius:14px;width:560px;max-width:95vw;padding:28px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="color:#fff;margin:0;">🚀 Test End-to-End</h3>
+      <button onclick="chiudiTestModal()" style="background:none;border:none;color:#666;font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <!-- setup: scegli destinatario e avvia -->
+    <div id="test-setup">
+      <label style="display:block;color:#9ab;font-size:12px;margin-bottom:6px;">Invia il piano editoriale di prova a:</label>
+      <input id="test-email" type="email" value="{{ strategia.email_cliente }}"
+             placeholder="email@esempio.it"
+             style="width:100%;background:#0a0c14;border:1px solid #2a2d3a;border-radius:8px;color:#e0e0e0;padding:11px 13px;font-size:14px;">
+      <p style="color:#555;font-size:11px;margin:8px 0 16px;">Cambia l'indirizzo per far provare il flusso a un indirizzo di test (o a un cliente reale).</p>
+      <button onclick="lanciaTestFlow()" id="btn-lancia-test"
+              style="width:100%;background:#34d399;border:none;border-radius:8px;color:#04231a;font-weight:700;font-size:14px;padding:12px;cursor:pointer;">
+        🚀 Avvia test e invia email
+      </button>
+    </div>
+    <!-- esecuzione: stato + log -->
+    <div id="test-run" style="display:none;">
+      <div id="test-status" style="color:#a78bfa;font-size:13px;margin-bottom:12px;">Avvio...</div>
+      <div id="test-log" style="background:#0a0c14;border-radius:8px;padding:16px;font-family:monospace;font-size:13px;height:280px;overflow-y:auto;line-height:1.6;"></div>
+      <p style="color:#555;font-size:12px;margin-top:12px;">Controlla la mail — clicca "Approva" per completare il test e pubblicare su Facebook.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ ASSISTENTE AI (CHAT) ════════════════ -->
+<style>
+  #chat-launcher { position: fixed; bottom: 22px; right: 22px; z-index: 9000;
+    background: linear-gradient(135deg,#4f8ef7,#7c5cff); color: #fff; border: none;
+    border-radius: 50px; padding: 13px 20px; font-size: 14px; font-weight: 700;
+    cursor: pointer; box-shadow: 0 6px 22px rgba(79,142,247,.45); display: flex; align-items: center; gap: 8px; }
+  #chat-launcher:hover { transform: translateY(-2px); }
+  #chat-panel { position: fixed; bottom: 22px; right: 22px; z-index: 9001; width: 410px; max-width: 95vw;
+    height: 620px; max-height: 88vh; background: #12141f; border: 1px solid #2a2d3a;
+    border-radius: 16px; display: none; flex-direction: column; overflow: hidden;
+    box-shadow: 0 12px 48px rgba(0,0,0,.55); }
+  #chat-panel.open { display: flex; }
+  .chat-head { background: #1a1d27; padding: 14px 16px; border-bottom: 1px solid #2a2d3a; }
+  .chat-head-top { display: flex; align-items: center; justify-content: space-between; }
+  .chat-title { font-weight: 800; color: #fff; font-size: 15px; display:flex; align-items:center; gap:8px; }
+  .chat-close { background: none; border: none; color: #777; font-size: 19px; cursor: pointer; }
+  .chat-modes { display: flex; gap: 4px; margin-top: 12px; background: #0f1117; padding: 4px; border-radius: 9px; }
+  .chat-mode { flex: 1; text-align: center; font-size: 11px; font-weight: 700; padding: 7px 4px;
+    border-radius: 6px; cursor: pointer; color: #888; transition: all .15s; border: none; background: none; }
+  .chat-mode.active { background: #4f8ef7; color: #fff; }
+  .chat-mode small { display: block; font-weight: 500; font-size: 9px; opacity: .8; margin-top: 2px; }
+  .chat-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .chat-msg { max-width: 85%; padding: 10px 13px; border-radius: 12px; font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
+  .chat-msg.user { align-self: flex-end; background: #4f8ef7; color: #fff; border-bottom-right-radius: 3px; }
+  .chat-msg.bot { align-self: flex-start; background: #1f2235; color: #e0e0e0; border-bottom-left-radius: 3px; }
+  .chat-msg.sys { align-self: center; background: transparent; color: #666; font-size: 12px; font-style: italic; }
+  .chat-confirm { align-self: flex-start; display: flex; gap: 8px; margin-top: -4px; }
+  .chat-confirm button { border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .chat-confirm .si { background: #22c55e; color: #fff; }
+  .chat-confirm .no { background: #2a2d3a; color: #aaa; }
+  .chat-input-row { display: flex; gap: 8px; padding: 12px; border-top: 1px solid #2a2d3a; background: #0f1117; }
+  .chat-input-row textarea { flex: 1; resize: none; background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px;
+    color: #e0e0e0; padding: 10px 12px; font-size: 13.5px; font-family: inherit; height: 42px; max-height: 120px; }
+  .chat-input-row button { background: #4f8ef7; border: none; border-radius: 10px; color: #fff; padding: 0 16px; font-weight: 700; cursor: pointer; }
+  .chat-suggerimenti { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 10px; }
+  .chat-sugg { background: #1a1d27; border: 1px solid #2a2d3a; color: #9ab; font-size: 11px; padding: 6px 10px; border-radius: 20px; cursor: pointer; }
+  .chat-sugg:hover { border-color: #4f8ef7; color: #fff; }
+  .typing { display: inline-block; }
+  .typing span { animation: blink 1.2s infinite; }
+  .typing span:nth-child(2){animation-delay:.2s} .typing span:nth-child(3){animation-delay:.4s}
+  @keyframes blink { 0%,60%,100%{opacity:.2} 30%{opacity:1} }
+</style>
+
+<button id="chat-launcher" onclick="apriChat()">💬 Assistente AI</button>
+
+<div id="chat-panel">
+  <div class="chat-head">
+    <div class="chat-head-top">
+      <div class="chat-title">💬 Assistente AI</div>
+      <button class="chat-close" onclick="chiudiChat()">✕</button>
+    </div>
+    <div class="chat-modes">
+      <button class="chat-mode" data-mode="assistente" onclick="setMode('assistente')">Assistente<small>solo guida</small></button>
+      <button class="chat-mode active" data-mode="sicure" onclick="setMode('sicure')">Azioni sicure<small>genera/modifica</small></button>
+      <button class="chat-mode" data-mode="tutto" onclick="setMode('tutto')">Esegui tutto<small>con conferma</small></button>
+    </div>
+  </div>
+  <div class="chat-body" id="chat-body"></div>
+  <div class="chat-suggerimenti" id="chat-suggerimenti"></div>
+  <div class="chat-input-row">
+    <textarea id="chat-input" placeholder="Scrivi un comando… es. 'rigenera il post 3'" onkeydown="chatKey(event)"></textarea>
+    <button onclick="inviaChat()">➤</button>
+  </div>
+</div>
+
+<!-- ════════════════ TUTORIAL GUIDATO ════════════════ -->
+<style>
+  #tour-overlay { position: fixed; inset: 0; z-index: 9500; display: none; }
+  #tour-overlay.open { display: block; }
+  #tour-backdrop { position: absolute; inset: 0; background: rgba(5,7,12,.78); }
+  #tour-highlight { position: absolute; border: 2px solid #4f8ef7; border-radius: 10px;
+    box-shadow: 0 0 0 4px rgba(79,142,247,.3), 0 0 0 9999px rgba(5,7,12,.78); transition: all .3s ease; pointer-events: none; }
+  #tour-card { position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%);
+    background: #161925; border: 1px solid #2a2d3a; border-radius: 14px; padding: 22px 24px;
+    width: 460px; max-width: 92vw; box-shadow: 0 12px 48px rgba(0,0,0,.6); z-index: 9600; }
+  #tour-step-num { font-size: 11px; font-weight: 700; color: #4f8ef7; letter-spacing: 1px; text-transform: uppercase; }
+  #tour-title { font-size: 19px; font-weight: 800; color: #fff; margin: 6px 0 8px; }
+  #tour-text { font-size: 14px; color: #b9bfcf; line-height: 1.55; }
+  .tour-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
+  .tour-dots { display: flex; gap: 5px; }
+  .tour-dot { width: 7px; height: 7px; border-radius: 50%; background: #2a2d3a; }
+  .tour-dot.active { background: #4f8ef7; }
+  .tour-btns button { border: none; border-radius: 9px; padding: 9px 18px; font-size: 13px; font-weight: 700; cursor: pointer; margin-left: 8px; }
+  .tour-btns .skip { background: none; color: #777; }
+  .tour-btns .next { background: #4f8ef7; color: #fff; }
+  .tour-btns .prev { background: #2a2d3a; color: #ccc; }
+</style>
+
+<div id="tour-overlay">
+  <div id="tour-backdrop" onclick="chiudiTutorial()"></div>
+  <div id="tour-highlight"></div>
+  <div id="tour-card">
+    <button onclick="chiudiTutorial()" title="Chiudi il tutorial"
+      style="position:absolute;top:12px;right:14px;background:none;border:none;color:#777;font-size:20px;cursor:pointer;line-height:1;">✕</button>
+    <div id="tour-step-num"></div>
+    <div id="tour-title"></div>
+    <div id="tour-text"></div>
+    <div class="tour-nav">
+      <div class="tour-dots" id="tour-dots"></div>
+      <div class="tour-btns">
+        <button class="skip" onclick="chiudiTutorial()">Salta</button>
+        <button class="prev" id="tour-prev" onclick="tourVai(-1)">Indietro</button>
+        <button class="next" id="tour-next" onclick="tourVai(1)">Avanti →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ UI MODERNA (override estetico) ════════════════ -->
+<style>
+  :root { --accent:#5b8def; --accent2:#7c5cff; --panel:#161a24; --panel2:#1b2030; --line:#252a38; }
+  body { background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(124,92,255,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 10%, rgba(91,141,239,.10), transparent 55%),
+      #0c0e14;
+    -webkit-font-smoothing: antialiased; }
+
+  /* TOPBAR glassy */
+  .topbar { background: rgba(18,21,31,.82); backdrop-filter: blur(14px) saturate(140%);
+    border-bottom: 1px solid var(--line); box-shadow: 0 1px 0 rgba(255,255,255,.02); }
+  .logo { background: linear-gradient(135deg,var(--accent),var(--accent2));
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; letter-spacing: .3px; }
+  .nome-cliente { font-size: 15.5px; letter-spacing: .2px; }
+
+  /* SIDEBAR */
+  .sidebar { background: linear-gradient(180deg,#12151e,#0f1219); }
+  .sb-label { color:#5a6072; font-size: 10px; letter-spacing: 1.4px; }
+  .sb-btn { border-radius: 10px; padding: 10px 12px; font-size: 13px; font-weight: 600;
+    position: relative; transition: background .18s, color .18s, transform .12s; }
+  .sb-btn:hover { background: #1d2434; transform: translateX(2px); }
+  .sb-btn:active { transform: translateX(2px) scale(.99); }
+
+  /* STATO box */
+  .stato-box { background: linear-gradient(180deg,#141826,#10131d); border: 1px solid var(--line);
+    border-radius: 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,.03); }
+
+  /* TABS pill */
+  .tabs { border-bottom: 1px solid var(--line); gap: 4px; }
+  .tab { border-radius: 9px 9px 0 0; }
+  .tab.active { color: #fff; border-bottom-color: var(--accent); }
+
+  .section-title { font-size: 17px; letter-spacing: .2px; }
+
+  /* POST CARDS elevated */
+  .post-card { background: linear-gradient(180deg,var(--panel),#14171f);
+    border: 1px solid var(--line); border-radius: 14px; margin-bottom: 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .14s, box-shadow .14s, border-color .14s; }
+  .post-card:hover { border-color:#33405e; transform: translateY(-2px);
+    box-shadow: 0 10px 26px rgba(0,0,0,.35); }
+  .post-card.open { border-color: rgba(91,141,239,.5); box-shadow: 0 10px 30px rgba(91,141,239,.12); }
+  .post-header { padding: 13px 16px; gap: 12px; }
+  .post-num { color: var(--accent); }
+  .post-arg { border-radius: 999px; padding: 3px 11px; font-size: 10.5px; letter-spacing: .2px; }
+  .post-data { color:#5a6072; }
+
+  /* CAMPI */
+  .fe, .form-input { border-radius: 9px; transition: border-color .15s, box-shadow .15s; }
+  .fe:focus, .form-input:focus { border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(91,141,239,.18); }
+
+  /* BOTTONI */
+  .btn-save, .btn-primary { background: linear-gradient(135deg,var(--accent),#3f6fe0);
+    box-shadow: 0 4px 14px rgba(63,111,224,.3); border-radius: 9px; }
+  .btn-save:hover, .btn-primary:hover { filter: brightness(1.07); }
+  .btn-sm { border-radius: 9px; }
+
+  /* PROGRESS */
+  .progress-wrap { border-radius: 12px; background: linear-gradient(180deg,#121620,#0f131c);
+    border: 1px solid var(--line); }
+  .progress-bar-bg { height: 8px; border-radius: 6px; }
+  .progress-bar { background: linear-gradient(90deg,var(--accent),var(--accent2));
+    box-shadow: 0 0 14px rgba(124,92,255,.4); }
+
+  /* MODALI */
+  .modal { border-radius: 18px; box-shadow: 0 24px 70px rgba(0,0,0,.6); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #232a3a; border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #2f3850; background-clip: padding-box; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* CHAT launcher un filo più ricco */
+  #chat-launcher { box-shadow: 0 8px 26px rgba(91,141,239,.5); letter-spacing: .2px; }
+  #chat-launcher:hover { filter: brightness(1.06); }
+
+  /* SELECT modello AI */
+  .ai-select { width: 100%; background: #131826; color: #e6e9f0; border: 1px solid var(--line);
+    border-radius: 10px; padding: 9px 11px; font-size: 12.5px; font-family: inherit; cursor: pointer;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a8099' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat: no-repeat; background-position: right 10px center; }
+  .ai-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91,141,239,.18); }
+  .ai-select option:disabled { color: #555; }
+  .ai-check-btn { width: 100%; margin-top: 7px; background: #131826; border: 1px solid var(--line);
+    color: #9aa2b5; font-size: 11.5px; font-weight: 600; padding: 7px; border-radius: 9px; cursor: pointer; transition: .15s; }
+  .ai-check-btn:hover { background: #1b2233; color: #cfd4e0; }
+  .ai-check-btn:disabled { opacity: .6; cursor: default; }
+  .ai-model-hint { font-size: 10.5px; color: #5a6072; margin-top: 7px; line-height: 1.5; padding: 0 2px; }
+
+  /* SWITCH PIATTAFORMA (Facebook / Instagram) */
+  .platform-switch { display: inline-flex; background: #11151f; border: 1px solid var(--line);
+    border-radius: 12px; padding: 4px; gap: 4px; margin-bottom: 18px; }
+  .platform-btn { display: flex; align-items: center; gap: 8px; border: none; background: none;
+    color: #8a91a3; font-size: 13.5px; font-weight: 700; padding: 9px 18px; border-radius: 9px;
+    cursor: pointer; transition: all .18s; }
+  .platform-btn:hover { color: #cfd4e0; }
+  .platform-btn.active.fb { background: linear-gradient(135deg,#1877f2,#0a5fd0); color: #fff; box-shadow: 0 4px 14px rgba(24,119,242,.4); }
+  .platform-btn.active.ig { background: linear-gradient(135deg,#e1306c,#c13584 40%,#f56040); color: #fff; box-shadow: 0 4px 14px rgba(225,48,108,.4); }
+  .platform-btn .pf-ico { font-size: 15px; }
+</style>
+
+<script>
+/* ═══════════ CHAT AGENT ═══════════ */
+let chatMode = 'sicure';
+let chatStoria = [];      // [{role, content}]
+let chatBusy = false;
+
+const CHAT_SUGGERIMENTI = {
+  assistente: ["Cosa fa questa app?", "Quanti post ci sono?", "Come funziona l'approvazione?"],
+  sicure:     ["Rigenera il post 3", "Genera il PDF", "Quanti post ci sono?"],
+  tutto:      ["Invia il piano al cliente", "Rigenera tutti i post", "Pubblica su Facebook"],
+};
+
+function apriChat() {
+  document.getElementById('chat-panel').classList.add('open');
+  document.getElementById('chat-launcher').style.display = 'none';
+  if (chatStoria.length === 0) {
+    botMsg("Ciao! Sono l'assistente del PED Manager. Dimmi cosa vuoi fare — posso generare contenuti, rigenerare e modificare post, creare il PDF e altro. Scegli la modalità qui sopra.");
+  }
+  renderSuggerimenti();
+  document.getElementById('chat-input').focus();
+}
+function chiudiChat() {
+  document.getElementById('chat-panel').classList.remove('open');
+  document.getElementById('chat-launcher').style.display = 'flex';
+}
+function setMode(m) {
+  chatMode = m;
+  document.querySelectorAll('.chat-mode').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  renderSuggerimenti();
+  const etich = {assistente:"Modalità Assistente: rispondo e guido, non eseguo azioni.",
+                 sicure:"Modalità Azioni sicure: genero/modifico contenuti e PDF (no email/Meta).",
+                 tutto:"Modalità Esegui tutto: posso anche inviare email e pubblicare su Meta, con conferma."};
+  sysMsg(etich[m]);
+}
+function renderSuggerimenti() {
+  const box = document.getElementById('chat-suggerimenti');
+  box.innerHTML = (CHAT_SUGGERIMENTI[chatMode] || []).map(s =>
+    `<button class="chat-sugg" onclick="usaSuggerimento('${s.replace(/'/g,"\\'")}')">${s}</button>`).join('');
+}
+function usaSuggerimento(s){ document.getElementById('chat-input').value = s; inviaChat(); }
+
+function userMsg(t){ addMsg('user', t); chatStoria.push({role:'user', content:t}); }
+function botMsg(t){ addMsg('bot', t); chatStoria.push({role:'assistant', content:t}); }
+function sysMsg(t){ addMsg('sys', t); }
+function addMsg(cls, t){
+  const b = document.getElementById('chat-body');
+  const d = document.createElement('div');
+  d.className = 'chat-msg ' + cls; d.textContent = t;
+  b.appendChild(d); b.scrollTop = b.scrollHeight;
+  return d;
+}
+function chatKey(e){ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); inviaChat(); } }
+
+async function inviaChat() {
+  if (chatBusy) return;
+  const inp = document.getElementById('chat-input');
+  const testo = inp.value.trim();
+  if (!testo) return;
+  inp.value = '';
+  userMsg(testo);
+  await chiamaChat({});
+}
+
+async function chiamaChat(extra) {
+  chatBusy = true;
+  const b = document.getElementById('chat-body');
+  const typing = document.createElement('div');
+  typing.className = 'chat-msg bot typing';
+  typing.innerHTML = '<span>●</span><span>●</span><span>●</span>';
+  b.appendChild(typing); b.scrollTop = b.scrollHeight;
+  try {
+    const r = await fetch(`/api/chat/${CLIENTE}`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(Object.assign({messaggi: chatStoria, modalita: chatMode}, extra))
+    });
+    const d = await r.json();
+    typing.remove();
+    if (d.errore) { sysMsg('⚠ ' + d.errore); return; }
+    if (d.risposta) botMsg(d.risposta);
+    if (d.pending) mostraConferma(d.pending);
+  } catch (e) {
+    typing.remove(); sysMsg('⚠ Errore di connessione');
+  } finally {
+    chatBusy = false;
+  }
+}
+
+function mostraConferma(pending) {
+  const b = document.getElementById('chat-body');
+  const wrap = document.createElement('div');
+  wrap.className = 'chat-confirm';
+  wrap.innerHTML = `<button class="si">✓ Conferma</button><button class="no">✕ Annulla</button>`;
+  wrap.querySelector('.si').onclick = async () => {
+    wrap.remove(); sysMsg('Confermato.');
+    await chiamaChat({conferma: pending.azione});
+  };
+  wrap.querySelector('.no').onclick = () => { wrap.remove(); botMsg('Ok, annullato. Non ho eseguito nulla.'); };
+  b.appendChild(wrap); b.scrollTop = b.scrollHeight;
+}
+
+/* ═══════════ TUTORIAL GUIDATO ═══════════ */
+const TOUR = [
+  { sel: null, titolo: "Benvenuto nel PED Manager 👋",
+    testo: "Questo è il pannello per gestire il piano editoriale social di un cliente. Ti mostro le funzioni principali in pochi passi. Puoi saltare quando vuoi." },
+  { sel: "#platform-switch", titolo: "Facebook / Instagram",
+    testo: "Da questo switch scegli su quale piattaforma lavorare. Ora stiamo testando Facebook: vedi i post del feed. Su Instagram compaiono anche le Storie." },
+  { sel: ".tabs", titolo: "Post e Storie",
+    testo: "Qui vedi i post e le storie generati dall'AI. Clicca su una scheda per espanderla, modificare il testo, gli hashtag o l'orario." },
+  { sel: "#ai-model-select", titolo: "Modello AI",
+    testo: "Scegli il modello AI per generare i testi. Sono disponibili più modelli gratuiti: se uno esaurisce il limite giornaliero, il sistema passa automaticamente al successivo. I modelli premium arriveranno presto." },
+  { sel: ".sb-section:nth-of-type(1)", titolo: "Generazione contenuti",
+    testo: "Da qui generi con l'AI i post e le storie, e crei il PDF del piano editoriale da mandare al cliente." },
+  { sel: "[onclick='avviaMedia()']", titolo: "Media automatici",
+    testo: "Scarica le foto dalla cartella Google Drive del cliente e le classifica con l'AI per argomento, scegliendo l'immagine giusta per ogni post." },
+  { sel: ".sb-btn.success", titolo: "Invio al cliente",
+    testo: "Invia al cliente l'email con il PDF e i pulsanti Approva / Richiedi modifiche. La risposta torna automaticamente nel pannello." },
+  { sel: "[onclick='avviaTestFlow()']", titolo: "Test End-to-End",
+    testo: "Esegue tutto il flusso di prova: invia la mail, attende l'approvazione e pubblica un post di prova su Facebook. Utile per la demo." },
+  { sel: "#chat-launcher", titolo: "Assistente AI 💬",
+    testo: "Il pezzo forte: parli con l'app in linguaggio naturale e lei esegue i comandi. Scegli la modalità (solo guida, azioni sicure, oppure esegui tutto con conferma)." },
+];
+let tourIdx = 0;
+
+function avviaTutorial(){ tourIdx = 0; document.getElementById('tour-overlay').classList.add('open'); renderTour(); }
+function chiudiTutorial(){ document.getElementById('tour-overlay').classList.remove('open'); document.getElementById('tour-highlight').style.opacity = 0; }
+function tourVai(d){ tourIdx += d; if (tourIdx < 0) tourIdx = 0; if (tourIdx >= TOUR.length){ chiudiTutorial(); return; } renderTour(); }
+
+function renderTour(){
+  const step = TOUR[tourIdx];
+  document.getElementById('tour-step-num').textContent = `Passo ${tourIdx+1} di ${TOUR.length}`;
+  document.getElementById('tour-title').textContent = step.titolo;
+  document.getElementById('tour-text').textContent = step.testo;
+  document.getElementById('tour-prev').style.visibility = tourIdx === 0 ? 'hidden' : 'visible';
+  document.getElementById('tour-next').textContent = tourIdx === TOUR.length-1 ? 'Fine ✓' : 'Avanti →';
+  document.getElementById('tour-dots').innerHTML = TOUR.map((_,i)=>`<div class="tour-dot ${i===tourIdx?'active':''}"></div>`).join('');
+
+  const hl = document.getElementById('tour-highlight');
+  const el = step.sel ? document.querySelector(step.sel) : null;
+  if (el) {
+    el.scrollIntoView({behavior:'smooth', block:'center'});
+    setTimeout(() => {
+      const r = el.getBoundingClientRect();
+      hl.style.opacity = 1;
+      hl.style.top = (r.top - 6) + 'px'; hl.style.left = (r.left - 6) + 'px';
+      hl.style.width = (r.width + 12) + 'px'; hl.style.height = (r.height + 12) + 'px';
+    }, 250);
+  } else {
+    hl.style.opacity = 0;
+    hl.style.width = '0px'; hl.style.height = '0px';
+  }
+}
+
+/* ESC chiude tutorial / chat / modali — esci in qualsiasi momento */
+document.addEventListener('keydown', function(e){
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('tour-overlay').classList.contains('open')) { chiudiTutorial(); return; }
+  if (document.getElementById('chat-panel').classList.contains('open')) { chiudiChat(); return; }
+  if (document.getElementById('modal-test').style.display === 'flex') { chiudiTestModal(); return; }
+});
+</script>
+
+</body>
+</html>

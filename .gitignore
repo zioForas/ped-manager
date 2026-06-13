@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Ambiente / segreti
+.env
+*.env
+!.env.example
+clienti/*/.credentials/
+
+# OS
+.DS_Store
+
+# Output generati (JSON, PDF, media) — non versionati
+output/*
+!output/.gitkeep
+
+# Frontend (React/Vite)
+frontend/node_modules/
+frontend/dist/
+webapp/static/spa/
+
+# Log / debug
+*.log
+*debug_*.png

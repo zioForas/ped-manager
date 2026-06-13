@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PED Manager</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+         background: #0f1117; color: #e0e0e0; min-height: 100vh; }
+  .topbar { background: #1a1d27; border-bottom: 1px solid #2a2d3a;
+            padding: 14px 32px; display: flex; align-items: center; gap: 12px; }
+  .logo { font-size: 20px; font-weight: 800; color: #4f8ef7; letter-spacing: -0.5px; }
+  .logo span { color: #e0e0e0; font-weight: 400; }
+  .topbar-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+  .btn-new-top { background: #2962ff; color: white; border: none; padding: 8px 16px;
+                 border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-new-top:hover { background: #1e4fd8; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+  .page-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  .sub { color: #666; margin-bottom: 32px; font-size: 14px; }
+
+  .stats-row { display: flex; gap: 16px; margin-bottom: 32px; }
+  .stat-box { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 10px;
+              padding: 16px 20px; flex: 1; }
+  .stat-val { font-size: 28px; font-weight: 800; color: #4f8ef7; }
+  .stat-label { font-size: 12px; color: #666; margin-top: 2px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+  .card { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 12px;
+          padding: 22px; transition: border-color .2s, transform .15s; cursor: pointer; }
+  .card:hover { border-color: #4f8ef7; transform: translateY(-1px); }
+  .card-nome { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
+  .card-periodo { color: #666; font-size: 13px; margin-bottom: 14px; }
+  .card-meta { display: flex; gap: 7px; margin: 10px 0 16px; flex-wrap: wrap; }
+  .tag { padding: 3px 9px; border-radius: 5px; font-size: 11px; font-weight: 600; border: 1px solid; }
+  .tag-ok { border-color: #166534; color: #4ade80; background: #052e16; }
+  .tag-no { border-color: #2a2d3a; color: #555; background: transparent; }
+
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
+           border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+  .badge-approvato { background: #052e16; color: #4ade80; }
+  .badge-in_attesa { background: #0c1a3a; color: #60a5fa; }
+  .badge-modifiche_richieste { background: #2a0f04; color: #fb923c; }
+  .badge-non_inviato { background: #1f2937; color: #6b7280; }
+  .badge-schedulato { background: #1a0f3a; color: #a78bfa; }
+
+  .card-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .dot-approvato { background: #4ade80; }
+  .dot-in_attesa { background: #60a5fa; }
+  .dot-modifiche_richieste { background: #fb923c; }
+  .dot-non_inviato { background: #6b7280; }
+  .dot-schedulato { background: #a78bfa; }
+
+  .btn-apri { background: #2962ff; color: white; border: none; padding: 9px 18px;
+              border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer;
+              text-decoration: none; display: inline-block; }
+  .btn-apri:hover { background: #1e4fd8; }
+
+  .add-card { border: 1.5px dashed #2a2d3a; display: flex; flex-direction: column;
+              align-items: center; justify-content: center; gap: 8px;
+              min-height: 160px; color: #444; transition: all .2s; }
+  .add-card:hover { border-color: #4f8ef7; color: #4f8ef7; transform: translateY(-1px); }
+  .add-icon { font-size: 28px; }
+
+  /* Modal nuovo cliente */
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6);
+              backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; }
+  .modal-bg.open { display: flex; }
+  .modal { background: #1a1d27; border: 1px solid #2a2d3a; border-radius: 14px;
+           padding: 28px 32px; width: 480px; max-width: 95vw; }
+  .modal h2 { font-size: 18px; margin-bottom: 20px; }
+  .form-row { margin-bottom: 14px; }
+  .form-label { font-size: 11px; color: #666; text-transform: uppercase; margin-bottom: 5px; display: block; }
+  .form-input { width: 100%; background: #0f1117; border: 1px solid #2a2d3a; border-radius: 7px;
+                padding: 9px 12px; color: #e0e0e0; font-size: 14px; font-family: inherit; }
+  .form-input:focus { outline: none; border-color: #4f8ef7; }
+  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+  .btn-cancel { background: transparent; border: 1px solid #2a2d3a; color: #888;
+                padding: 9px 18px; border-radius: 7px; cursor: pointer; font-size: 13px; }
+  .btn-crea { background: #2962ff; color: white; border: none; padding: 9px 18px;
+              border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 600; }
+
+  .toast { position: fixed; bottom: 24px; right: 24px; background: #1a1d27;
+           border: 1px solid #2a2d3a; border-radius: 10px; padding: 14px 20px;
+           font-size: 14px; transform: translateY(100px); opacity: 0;
+           transition: all .3s; z-index: 200; max-width: 360px; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.ok { border-color: #166534; color: #4ade80; }
+  .toast.err { border-color: #991b1b; color: #f87171; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">PED <span>Manager</span></div>
+  <div class="topbar-right">
+    <button class="btn-new-top" onclick="document.getElementById('modal-new').classList.add('open')">
+      + Nuovo cliente
+    </button>
+    <a href="/logout" style="color:#666;text-decoration:none;font-size:13px;padding:7px 12px;border:1px solid #2a2d3a;border-radius:7px;" title="Esci">Esci ⎋</a>
+  </div>
+</div>
+
+<div class="container">
+  <div class="page-title">Clienti</div>
+  <p class="sub">Gestisci i piani editoriali — clicca un cliente per aprire il workspace</p>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-val">{{ clienti|length }}</div>
+      <div class="stat-label">Clienti attivi</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">{{ clienti|selectattr('stato','eq','approvato')|list|length }}</div>
+      <div class="stat-label">Approvati</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">{{ clienti|selectattr('stato','eq','in_attesa')|list|length }}</div>
+      <div class="stat-label">In attesa risposta</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val">{{ clienti|selectattr('stato','eq','schedulato')|list|length }}</div>
+      <div class="stat-label">Schedulati su Meta</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    {% for c in clienti %}
+    <div class="card" onclick="location.href='/cliente/{{ c.id }}'">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+        <span class="card-dot dot-{{ c.stato }}"></span>
+        <div class="card-nome">{{ c.nome }}</div>
+      </div>
+      <div class="card-periodo">{{ c.periodo }}</div>
+      <div class="card-meta">
+        <span class="tag {{ 'tag-ok' if c.ped_exists else 'tag-no' }}">
+          {{ 'PED' if c.ped_exists else '— PED' }}
+        </span>
+        <span class="tag {{ 'tag-ok' if c.pdf_exists else 'tag-no' }}">
+          {{ 'PDF' if c.pdf_exists else '— PDF' }}
+        </span>
+        <span class="badge badge-{{ c.stato }}">
+          <span class="card-dot dot-{{ c.stato }}" style="width:5px;height:5px;"></span>
+          {% if c.stato == 'approvato' %}Approvato
+          {% elif c.stato == 'in_attesa' %}In attesa
+          {% elif c.stato == 'modifiche_richieste' %}Modifiche richieste
+          {% elif c.stato == 'schedulato' %}Schedulato
+          {% else %}Non inviato{% endif %}
+        </span>
+      </div>
+      <a href="/cliente/{{ c.id }}" class="btn-apri" onclick="event.stopPropagation()">Apri workspace →</a>
+    </div>
+    {% endfor %}
+
+    <div class="card add-card" onclick="document.getElementById('modal-new').classList.add('open')">
+      <div class="add-icon">＋</div>
+      <div style="font-size:14px;font-weight:600;">Nuovo cliente</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal nuovo cliente -->
+<div class="modal-bg" id="modal-new">
+  <div class="modal">
+    <h2>Nuovo cliente</h2>
+    <div class="form-row">
+      <label class="form-label">Nome studio / cliente *</label>
+      <input class="form-input" id="new-nome" placeholder="Es: Studio Dentistico Rossi">
+    </div>
+    <div class="form-row">
+      <label class="form-label">ID cliente (slug, senza spazi) *</label>
+      <input class="form-input" id="new-id" placeholder="Es: rossi">
+    </div>
+    <div class="form-row-2">
+      <div>
+        <label class="form-label">Mese inizio</label>
+        <select class="form-input" id="new-mese1">
+          <option>Gennaio</option><option>Febbraio</option><option>Marzo</option>
+          <option>Aprile</option><option>Maggio</option><option selected>Giugno</option>
+          <option>Luglio</option><option>Agosto</option><option>Settembre</option>
+          <option>Ottobre</option><option>Novembre</option><option>Dicembre</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Mese fine</label>
+        <select class="form-input" id="new-mese2">
+          <option>Gennaio</option><option>Febbraio</option><option>Marzo</option>
+          <option>Aprile</option><option>Maggio</option><option>Giugno</option>
+          <option selected>Luglio</option><option>Agosto</option><option>Settembre</option>
+          <option>Ottobre</option><option>Novembre</option><option>Dicembre</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Sito web</label>
+      <input class="form-input" id="new-sito" placeholder="https://...">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Email cliente (per invio PDF)</label>
+      <input class="form-input" id="new-email" type="email" placeholder="cliente@email.it">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Tono comunicazione</label>
+      <input class="form-input" id="new-tono" value="professionale ma caldo, rassicurante, accessibile">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="document.getElementById('modal-new').classList.remove('open')">Annulla</button>
+      <button class="btn-crea" onclick="creaCliente()">Crea cliente</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// auto-slug dal nome
+document.getElementById('new-nome').addEventListener('input', function() {
+  const slug = this.value.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim().replace(/\s+/g, '_');
+  document.getElementById('new-id').value = slug;
+});
+
+function toast(msg, tipo = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${tipo}`;
+  setTimeout(() => t.className = 'toast', 3500);
+}
+
+async function creaCliente() {
+  const id = document.getElementById('new-id').value.trim();
+  const nome = document.getElementById('new-nome').value.trim();
+  if (!id || !nome) { toast('Nome e ID obbligatori', 'err'); return; }
+
+  const payload = {
+    id, nome,
+    mese_inizio: document.getElementById('new-mese1').value,
+    mese_fine: document.getElementById('new-mese2').value,
+    sito: document.getElementById('new-sito').value.trim(),
+    email: document.getElementById('new-email').value.trim(),
+    tono: document.getElementById('new-tono').value.trim(),
+  };
+
+  const r = await fetch('/api/nuovo_cliente', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  if (r.ok) {
+    toast('Cliente creato!');
+    setTimeout(() => location.href = `/cliente/${id}`, 1000);
+  } else {
+    const d = await r.json();
+    toast(d.errore || 'Errore creazione', 'err');
+  }
+}
+
+// chiudi modal cliccando fuori
+document.getElementById('modal-new').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+</script>
+</body>
+</html>
