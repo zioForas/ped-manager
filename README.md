@@ -130,3 +130,4 @@ Pronto per qualsiasi host che supporti `requirements.txt` + `Procfile` (Railway,
 ## 📄 Licenza
 
 MIT.
+
